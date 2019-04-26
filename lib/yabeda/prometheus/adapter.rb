@@ -3,9 +3,6 @@
 require "prometheus/client"
 require "yabeda/base_adapter"
 
-require_relative "./counter_wrapper"
-require_relative "./gauge_wrapper"
-
 module Yabeda
   class Prometheus::Adapter < BaseAdapter
     def registry
@@ -14,20 +11,20 @@ module Yabeda
 
     def register_counter!(metric)
       validate_metric!(metric)
-      registry.register(Prometheus::CounterWrapper.new(metric))
+      registry.counter(build_name(metric), metric.comment)
     end
 
-    def perform_counter_increment!(*)
-      # Do nothing. Prometheus will read current value from evil metric
+    def perform_counter_increment!(metric, tags, increment)
+      registry.get(build_name(metric)).increment(tags, increment)
     end
 
     def register_gauge!(metric)
       validate_metric!(metric)
-      registry.register(Prometheus::GaugeWrapper.new(metric))
+      registry.gauge(build_name(metric), metric.comment)
     end
 
-    def perform_gauge_set!(*)
-      # Do nothing. Prometheus will read current value from evil metric
+    def perform_gauge_set!(metric, tags, increment)
+      registry.get(build_name(metric)).set(tags, increment)
     end
 
     def register_histogram!(metric)
